@@ -1,0 +1,97 @@
+---
+title: An R Markdown document converted from "Hw04.ipynb"
+output: html_document
+---
+
+# Homework 4: Merging, Aggregating, and Reshaping
+
+This homework emphasizes: merging, aggregating, reshaping.
+
+## Exercise 1 - Merging
+
+Create one file out of merging the 3 files (infant_mortality_rate.csv, life_expectancy_at_birth.csv, maternal_mortality_ratio.csv). Drop unneeded columns and rename columns as needed. Save the result as a CSV file.
+
+```{r}
+# Load the three CSV files from GitHub
+link_infant <- "https://raw.githubusercontent.com/FundamentalsChinmai/Hw04/refs/heads/main/data/infant_mortality_rate.csv" # URL : infant mortality data
+link_life <- "https://raw.githubusercontent.com/FundamentalsChinmai/Hw04/refs/heads/main/data/life_expectancy_at_birth.csv" # URL : life expectancy data
+link_maternal <- "https://raw.githubusercontent.com/FundamentalsChinmai/Hw04/refs/heads/main/data/maternal_mortality_ratio.csv" # URL : maternal mortality data
+
+infant_mortality <- read.csv(link_infant) # read CSV file : infant_mortality from GitHub
+life_expectancy <- read.csv(link_life) # read CSV file : life_expectancy from GitHub
+maternal_mortality <- read.csv(link_maternal) # read CSV file : maternal_mortality from GitHub
+```
+
+```{r}
+# Merge the three files by country
+merged_data <- merge( # merge function
+    infant_mortality, # first data frame to merge : infant_mortality
+    life_expectancy, # second data frame to merge : life_expectancy
+    by = "country") # merge by country
+merged_data <- merge( # merge function
+    merged_data, # using previous merged data as first data frame
+    maternal_mortality, # second data frame to merge : maternal_mortality
+    by = "country") # merge by country
+merged_data <- merged_data[, c("country", "region", "infant_mortality", "life_expectancy", "maternal_mortality")] # select only needed columns : country, region, and three health metrics
+
+write.csv(merged_data, "merged_health_data.csv", row.names = FALSE) # save merged data : merged_health_data.csv without row names
+```
+
+```{r}
+# Verify the file was created correctly
+verify_merged <- read.csv("merged_health_data.csv") # read CSV file : verify merged_health_data.csv
+cat("Number of rows:", nrow(verify_merged), "\n") # print number of rows : nrow function
+cat("Number of columns:", ncol(verify_merged), "\n") # print number of columns : ncol function
+cat("Column names:", paste(colnames(verify_merged), collapse = ", "), "\n") # print column names : paste with collapse
+head(verify_merged) # display first few rows : verify structure
+```
+
+## Exercise 2 - Aggregating
+
+Aggregate the merged file by region. Choose ONE suitable function to aggregate the variables. Save the result as a CSV file.
+
+```{r}
+# Aggregate by region using mean
+merged_data <- read.csv("merged_health_data.csv") # load merged file : merged_health_data.csv
+aggregated_data <- aggregate(cbind(infant_mortality, life_expectancy, maternal_mortality) ~ region,
+    data = merged_data, # source data : merged_data
+    FUN = mean) # aggregation function : mean for all three health metrics by region
+
+write.csv(aggregated_data, "aggregated_by_region.csv", row.names = FALSE) # save aggregated data : aggregated_by_region.csv without row names
+```
+
+```{r}
+# Verify the file was created correctly
+verify_aggregated <- read.csv("aggregated_by_region.csv") # read CSV file : verify aggregated_by_region.csv
+cat("Number of rows:", nrow(verify_aggregated), "\n") # print number of rows : nrow function
+cat("Number of columns:", ncol(verify_aggregated), "\n") # print number of columns : ncol function
+cat("Column names:", paste(colnames(verify_aggregated), collapse = ", "), "\n") # print column names : paste with collapse
+verify_aggregated # display aggregated data : verify structure
+```
+
+## Exercise 3 - Reshaping
+
+The merged file created in Exercise 1 is in wide format. Turn it into the correct long format. Consider omitting the column region, but you can keep it, as long as it is used properly. Save the result as a CSV file.
+
+```{r}
+# Reshape from wide to long format
+library(tidyr) # load package : tidyr for pivot_longer function
+merged_data <- read.csv("merged_health_data.csv") # load merged file : merged_health_data.csv
+long_data <- pivot_longer(data = merged_data, # source data : merged_data in wide format
+    cols = c(infant_mortality, life_expectancy, maternal_mortality), # columns to pivot : three health metrics
+    names_to = "metric", # new column name : metric for column names
+    values_to = "value") # new column name : value for metric values
+
+write.csv(long_data, "reshaped_long_format.csv", row.names = FALSE) # save reshaped data : reshaped_long_format.csv without row names
+```
+
+```{r}
+# Verify the file was created correctly
+verify_long <- read.csv("reshaped_long_format.csv") # read CSV file : verify reshaped_long_format.csv
+cat("Number of rows:", nrow(verify_long), "\n") # print number of rows : nrow function
+cat("Number of columns:", ncol(verify_long), "\n") # print number of columns : ncol function
+cat("Column names:", paste(colnames(verify_long), collapse = ", "), "\n") # print column names : paste with collapse
+cat("Unique metrics:", paste(unique(verify_long$metric), collapse = ", "), "\n") # print unique metrics : paste unique metric names
+head(verify_long, 20) # display first 20 rows : verify structure
+```
+
